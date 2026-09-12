@@ -164,6 +164,36 @@ if (diagRoute !== undefined) {
   check('非 GET 返回 405', res405.code === 405, `HTTP ${res405.code}`)
 }
 
+// ── 业务路由（只读部分）端到端：经 mock subprocess **真的跑用户私有仓的 framework 脚本** ──
+//   只测只读路由，不碰会改 profile / 推送 / 写快照的（note.push / sync.export 等）——
+//   探针保持零副作用。
+async function hit(route, method = 'GET') {
+  const res = fakeRes()
+  await route.handler(fakeReq(method), res)
+  let body = null
+  try { body = JSON.parse(res.body) } catch { /* keep null */ }
+  return { code: res.code, body, raw: res.body }
+}
+
+const busCases = [
+  ['exact /api/config-sync/repo.info', 'repo.info 端到端', (b) => b.ok === true && b.found === true],
+  ['exact /api/config-sync/onboarding.check', 'onboarding.check 端到端', (b) => b.ok === true && typeof b.due === 'boolean'],
+  ['exact /api/config-sync/sync.drift', 'sync.drift 端到端', (b) => b.ok === true && Array.isArray(b.alerts)],
+  ['exact /api/config-sync/browse.list', 'browse.list 端到端', (b) => b.ok === true && Array.isArray(b.items)],
+  ['exact /api/config-sync/note.preview', 'note.preview 端到端', (b) => b.ok === true || (b.error !== undefined && typeof b.error === 'string')],
+]
+for (const [key, label, pred] of busCases) {
+  const route = webServer.routes.get(key)
+  if (route === undefined) { check(label, false, '路由未注册'); continue }
+  try {
+    const r = await hit(route)
+    const pass = r.code === 200 && r.body !== null && pred(r.body)
+    check(label, pass,
+      pass ? `HTTP ${r.code}${r.body && r.body.error ? '（返回了 error 字段，未伪装成正常值 ✓）' : ''}`
+           : `HTTP ${r.code} raw=${String(r.raw || '').slice(0, 120)}`)
+  } catch (e) { check(label, false, String(e && e.message ? e.message : e)) }
+}
+
 // disposer 真的回收
 if (typeof dispose === 'function') {
   dispose()
