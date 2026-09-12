@@ -1,0 +1,12 @@
+# dsh-config-sync bundle patch：把本插件的行插进 web profile 的 roster。
+#
+# 作为 profile bundle 层应用（package.json 的 dsh.bundle.patch 字段）。
+#   node 半边  （exports "."        → lib/index.js）  运行在 host 进程：
+#                 /api/config-sync/* 同源路由（驱动用户私有仓里的 framework 脚本）
+#   浏览器半边（exports "./client"  → lib/client.js） 由 /plugins/<id>/client.js 提供：
+#                 设置页「配置同步」三按钮 + 首次引导对话框
+#
+# ⚠ name 必须与 package.json 的 name 完全一致，否则 profile 挂不上。
+- insert:
+    - id: config-sync
+      name: 'dsh-config-sync'
