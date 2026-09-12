@@ -257,6 +257,10 @@ if (spec !== undefined) {
   check('注册了 settings.section 条目（id=config-sync）', panel !== undefined,
     panel ? `order=${panel.order} label=${panel.label}` : registered.map((d) => d.id).join(','))
   check('注册条目带 label', panel !== undefined && typeof panel.label === 'string' && panel.label.length > 0)
+  check('inject 到 shell.overlay（首次引导）', injectedSlots.includes('shell.overlay'), injectedSlots.join(' | '))
+  const onb = registered.find((d) => d.id === 'config-sync-onboarding')
+  check('注册了 shell.overlay 引导条目（id=config-sync-onboarding）', onb !== undefined,
+    onb ? `order=${onb.order} name=${onb.name}` : registered.map((d) => d.id).join(','))
   check('client apply 返回 disposer 或 undefined（不报错即可）', clientDispose === undefined || typeof clientDispose === 'function')
 }
 
