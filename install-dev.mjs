@@ -80,7 +80,7 @@ async function main() {
 
   say('  ✓ 3080 未被占用（dsh web 已停）')
   say('')
-  say('  [1/3] 调用受护栏的安装器 framework/install.mjs …')
+  say('  [1/2] 调用受护栏的安装器 framework/install.mjs …')
   const spec = HERE.replace(/\\/g, '/')
   const ins = run(process.execPath, [path.join(REPO, 'framework', 'install.mjs'), spec], {
     cwd: REPO, timeout: 900000,
@@ -90,12 +90,7 @@ async function main() {
   say(`        install.mjs exit = ${ins.status}`)
 
   say('')
-  say('  [2/3] dump-config 冒烟（整棵插件树能否组合）…')
-  const smoke = run('dsh', ['--profile', PROFILE, '--dump-config'], { timeout: 300000, shell: true })
-  say(`        dump-config exit = ${smoke.status}`)
-
-  say('')
-  say('  [3/3] 断言：真的进了 dsh.profile.bundles …')
+  say('  [2/2] 断言：真的进了 dsh.profile.bundles …')
   let bundled = false
   try {
     const pkg = JSON.parse(
@@ -107,7 +102,10 @@ async function main() {
     say(`        读取 profile package.json 失败：${e && e.message ? e.message : e}`)
   }
 
-  const ok = ins.status === 0 && smoke.status === 0 && bundled
+  // install.mjs 内部已做 dump-config 冒烟 + 失败自动回滚，这里不重复：
+  // （重复的冒烟还会依赖 `dsh` 在 PATH 上 —— 装插件在用户 shell 里常找不到 dsh，
+  //   反而制造一个「看起来是插件/ profile 坏了」的假失败。这是 2026-09-12 踩过的。）
+  const ok = ins.status === 0 && bundled
   say('')
   say('  ' + '─'.repeat(64))
   say(ok
