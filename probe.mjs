@@ -110,12 +110,17 @@ check('导出 inject 数组', Array.isArray(host.inject), `inject = ${JSON.strin
 check('导出 apply 函数', typeof host.apply === 'function')
 check('inject 声明了 webServer', Array.isArray(host.inject) && host.inject.includes('webServer'))
 
+const injected = new Set(host.inject ?? [])
 const webServer = makeWebServer()
 const sub = makeSubprocess()
+// ★ 忠实模拟 DSH 的 inject 契约：**只有 inject 里声明的服务**才作为 ctx 属性提供。
+//   （真实 DSH 里，用了没 inject 的服务会报 `cannot get property "timer" without inject`。）
+//   这样"apply 用了没声明服务"的类 bug 能在探针阶段被抓到，而不是在真实运行时才炸。
+//   `subprocess` 是可选服务，走 ctx.get（不声明也是合法用法，所以无条件提供）。
 const ctx = {
-  webServer,
+  ...(injected.has('webServer') ? { webServer } : {}),
+  ...(injected.has('timer') ? { timeout: () => new Promise(() => {}) } : {}),
   get: (n) => (n === 'subprocess' ? sub : undefined),
-  timeout: () => new Promise(() => {}),        // 永不触发，避免干扰 Promise.race
   logger: { info: () => {}, warn: () => {}, error: () => {} },
 }
 
