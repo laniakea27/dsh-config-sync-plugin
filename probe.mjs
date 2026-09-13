@@ -179,7 +179,9 @@ const busCases = [
   ['exact /api/config-sync/repo.info', 'repo.info 端到端', (b) => b.ok === true && b.found === true],
   ['exact /api/config-sync/onboarding.check', 'onboarding.check 端到端', (b) => b.ok === true && typeof b.due === 'boolean'],
   ['exact /api/config-sync/onboarding.situation', 'onboarding.situation 端到端（三分支+步骤）', (b) => b.ok === true && Array.isArray(b.branches) && b.branches.length === 3 && Array.isArray(b.steps)],
-  ['exact /api/config-sync/sync.drift', 'sync.drift 端到端', (b) => b.ok === true && Array.isArray(b.alerts)],
+  // sync.drift 在"还没有快照"时会返回 error 字段（合法且正确：提示先导出快照）——
+  // 探针只要求"路由活着 + 返回结构化的 alerts 数组"，不要求快照一定存在。
+  ['exact /api/config-sync/sync.drift', 'sync.drift 端到端', (b) => Array.isArray(b.alerts) && (b.ok === true || typeof b.error === 'string')],
   ['exact /api/config-sync/browse.list', 'browse.list 端到端', (b) => b.ok === true && Array.isArray(b.items)],
   ['exact /api/config-sync/note.preview', 'note.preview 端到端', (b) => b.ok === true || (b.error !== undefined && typeof b.error === 'string')],
 ]
