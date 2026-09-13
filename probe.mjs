@@ -178,6 +178,7 @@ async function hit(route, method = 'GET') {
 const busCases = [
   ['exact /api/config-sync/repo.info', 'repo.info 端到端', (b) => b.ok === true && b.found === true],
   ['exact /api/config-sync/onboarding.check', 'onboarding.check 端到端', (b) => b.ok === true && typeof b.due === 'boolean'],
+  ['exact /api/config-sync/onboarding.situation', 'onboarding.situation 端到端（三分支+步骤）', (b) => b.ok === true && Array.isArray(b.branches) && b.branches.length === 3 && Array.isArray(b.steps)],
   ['exact /api/config-sync/sync.drift', 'sync.drift 端到端', (b) => b.ok === true && Array.isArray(b.alerts)],
   ['exact /api/config-sync/browse.list', 'browse.list 端到端', (b) => b.ok === true && Array.isArray(b.items)],
   ['exact /api/config-sync/note.preview', 'note.preview 端到端', (b) => b.ok === true || (b.error !== undefined && typeof b.error === 'string')],
